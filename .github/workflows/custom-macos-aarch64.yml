@@ -140,6 +140,14 @@ jobs:
         run: |
           ./build.py --flutter --hwcodec --unix-file-copy-paste
 
+      - name: Re-sign app bundle
+        shell: bash
+        run: |
+          set -euxo pipefail
+          APP_PATH="./flutter/build/macos/Build/Products/Release/RustDesk.app"
+          codesign --force --deep --sign - "$APP_PATH"
+          codesign --verify --deep --strict --verbose=2 "$APP_PATH"
+
       - name: Create unsigned DMG
         shell: bash
         run: |
