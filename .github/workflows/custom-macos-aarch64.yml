@@ -54,9 +54,22 @@ jobs:
       - name: Patch Flutter
         shell: bash
         run: |
-          cd "$(dirname "$(dirname "$(which flutter)")")"
-          git apply "${{ github.workspace }}/.github/patches/flutter_3.24.4_dropdown_menu_enableFilter.diff" || true
-          sed -i -e 's/_setFramesEnabledState(false);/\/\/_setFramesEnabledState(false);/g' ../packages/flutter/lib/src/scheduler/binding.dart
+          FLUTTER_ROOT="$(dirname "$(dirname "$(which flutter)")")"
+          git -C "$FLUTTER_ROOT" apply "${{ github.workspace }}/.github/patches/flutter_3.24.4_dropdown_menu_enableFilter.diff" || true
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+
+          flutter_root = Path(os.environ["FLUTTER_ROOT"])
+          binding = flutter_root / "packages/flutter/lib/src/scheduler/binding.dart"
+          text = binding.read_text()
+          text = text.replace(
+              "_setFramesEnabledState(false);",
+              "//_setFramesEnabledState(false);",
+          )
+          binding.write_text(text)
+          print(f"Patched {binding}")
+          PY
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@v1
